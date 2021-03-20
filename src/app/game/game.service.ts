@@ -56,14 +56,19 @@ export class GameService implements OnDestroy {
       100 // far
     );
 
-    this.camera.position.set(4, 4, 4);
-    this.camera.lookAt(0, 0, 0);
+    this.camera.position.set(0, -5, 5);
     this.camera.lookAt(0, 0, 0);
 
     const bglight = new THREE.AmbientLight(0xffffff, 1.3);
     this.scene.add(bglight);
 
     this.scene.add(new THREE.AxesHelper(5));
+
+    const geometry = new THREE.PlaneGeometry( 5, 5, 1 );
+    const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+    const plane = new THREE.Mesh( geometry, material );
+    plane.position.set(0, 0, -1);
+    this.scene.add( plane );
 
     this._loadModel();
   }

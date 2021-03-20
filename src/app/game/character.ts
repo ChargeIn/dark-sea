@@ -1,4 +1,4 @@
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
 
 export class BasicCharacterController {
@@ -16,7 +16,8 @@ export class BasicCharacterController {
   private static readonly rotationSpeed = 10;
   private input: BasicInputController;
   private ship: THREE.Sceen;
-  public onLoad: () => any = () => {};
+  public onLoad: () => any = () => {
+  };
 
   private loadModel(): void {
     const loader = new GLTFLoader();
@@ -26,6 +27,8 @@ export class BasicCharacterController {
       (gltf) => {
         gltf.scene.traverse((c) => (c.castShadow = true));
         this.ship = gltf.scene;
+        this.ship.rotation.x = Math.PI / 2;
+        this.ship.position.z = -0.4;
         this.onLoad();
       },
       undefined,
@@ -39,20 +42,35 @@ export class BasicCharacterController {
       BasicCharacterController.speed *
       timeElapsed;
 
-    this.ship.rotation.y +=
-      (+this.input.up - +this.input.down) *
-      BasicCharacterController.rotationSpeed *
-      timeElapsed;
-
     this.ship.position.x +=
       (+this.input.right - +this.input.left) *
       BasicCharacterController.speed *
       timeElapsed;
 
-    this.ship.rotation.y +=
-      (+this.input.right - +this.input.left) *
-      BasicCharacterController.rotationSpeed *
-      timeElapsed;
+    // update rotation
+    if (this.input.up) {
+      if (this.input.left) {
+        this.ship.rotation.y = -Math.PI * 3 / 4;
+      } else if (this.input.right) {
+        this.ship.rotation.y =  Math.PI * 3 / 4;
+      } else {
+        this.ship.rotation.y = Math.PI;
+      }
+    } else if(this.input.down) {
+      if (this.input.left) {
+        this.ship.rotation.y = -Math.PI / 4;
+      } else if (this.input.right) {
+        this.ship.rotation.y =  Math.PI / 4;
+      } else {
+        this.ship.rotation.y = 0;
+      }
+    } else {
+      if (this.input.left) {
+        this.ship.rotation.y = -Math.PI / 2;
+      } else if (this.input.right) {
+        this.ship.rotation.y =  Math.PI / 2;
+      }
+    }
   }
 }
 
@@ -85,4 +103,5 @@ export class BasicInputController {
   }
 }
 
-class BasicCharacterState {}
+class BasicCharacterState {
+}
