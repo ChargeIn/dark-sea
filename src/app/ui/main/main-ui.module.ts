@@ -12,6 +12,9 @@ import {MatProgressBarModule} from '@angular/material/progress-bar';
     HealthbarComponent,
     ActionbarComponent
   ],
+  exports: [
+    MainUiComponent
+  ],
   imports: [
     CommonModule,
     GameModule,

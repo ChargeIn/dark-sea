@@ -70,7 +70,9 @@ export class GameService implements OnDestroy {
     plane.position.set(0, 0, -1);
     this.scene.add( plane );
 
-    this._loadModel();
+    document.addEventListener('keyup', (e) => this.zoom());
+
+      this._loadModel();
   }
 
   public animate(): void {
@@ -112,4 +114,8 @@ export class GameService implements OnDestroy {
   }
 
   private _loadModel(): void {}
+
+  private zoom() {
+    this.camera
+  }
 }
