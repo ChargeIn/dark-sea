@@ -145,6 +145,7 @@
     "component-selector": [
       true,
       "element",
+      "ds",
       "app",
       "kebab-case"
     ]
