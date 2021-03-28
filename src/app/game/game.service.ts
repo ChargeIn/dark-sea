@@ -1,6 +1,11 @@
 import { ElementRef, Injectable, OnDestroy, NgZone } from '@angular/core';
 import * as THREE from 'three';
-import { BasicCharacterController } from './character';
+import {
+  BasicCharacterController,
+  BasicInputController,
+  InputController,
+} from './character';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -11,11 +16,19 @@ export class GameService implements OnDestroy {
   private camera: THREE.PerspectiveCamera;
   private scene: THREE.Scene;
   private player: BasicCharacterController;
+  private enemies: BasicCharacterController[] = [];
   private time: number;
 
-  private frameId: number = null;
+  private readonly zoomFar = 0.5;
+  private readonly zoomNear = 2;
+  private readonly clickRadius = 1;
+  private currentSelection: BasicCharacterController | null = null;
+  public newSelection = new BehaviorSubject<BasicCharacterController | null>(
+    null
+  );
+  private selectionCircle: THREE.Mesh;
 
-  private ship: THREE.Mesh;
+  private frameId: number = null;
 
   constructor(private ngZone: NgZone) {}
 
@@ -26,7 +39,13 @@ export class GameService implements OnDestroy {
   }
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
-    this.player = new BasicCharacterController();
+    this.player = new BasicCharacterController(
+      new BasicInputController(),
+      'ME'
+    );
+
+    const enemy = new BasicCharacterController(new InputController(), 'Enemy');
+    this.enemies.push(enemy);
 
     // The first step is to get the reference of the canvas element from our HTML document
     this.canvas = canvas.nativeElement;
@@ -40,16 +59,25 @@ export class GameService implements OnDestroy {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x193450);
 
-    this.player.onLoad = () => this.scene.add(this.player.model);
+    this.player.onLoad = () => {
+      this.player.model.name = 'test';
+      this.scene.add(this.player.model);
+    };
+    enemy.onLoad = () => {
+      enemy.model.position.set(1, 1, 0);
+      enemy.model.name = 'test2';
+      this.scene.add(enemy.model);
+    };
 
     const width = window.innerWidth;
     const height = window.innerHeight;
 
+    const aspec = width / height;
     this.renderer.setSize(width, height);
 
     this.camera = new THREE.OrthographicCamera(
-      -5, // left
-      5, // right
+      -5 * aspec, // left
+      5 * aspec, // right
       5, // top
       -5, // bottom
       1, // near
@@ -64,15 +92,23 @@ export class GameService implements OnDestroy {
 
     this.scene.add(new THREE.AxesHelper(5));
 
-    const geometry = new THREE.PlaneGeometry( 5, 5, 1 );
-    const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-    const plane = new THREE.Mesh( geometry, material );
+    const geometry = new THREE.PlaneGeometry(5, 5, 1);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffff00,
+      side: THREE.DoubleSide,
+    });
+    const plane = new THREE.Mesh(geometry, material);
     plane.position.set(0, 0, -1);
-    this.scene.add( plane );
+    //this.scene.add(plane);
 
-    document.addEventListener('keyup', (e) => this.zoom());
+    const geom = new THREE.CircleGeometry(1, 60);
+    //geom.vertices.shift();
+    const mat = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    this.selectionCircle = new THREE.LineLoop(geom, mat);
+    this.selectionCircle.position.z = -101;
+    this.scene.add(this.selectionCircle);
 
-      this._loadModel();
+    this._loadModel();
   }
 
   public animate(): void {
@@ -83,13 +119,10 @@ export class GameService implements OnDestroy {
       if (document.readyState !== 'loading') {
         this.render();
       } else {
-        window.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
           this.render();
         });
       }
-      window.addEventListener('resize', () => {
-        this.resize();
-      });
     });
   }
 
@@ -99,11 +132,53 @@ export class GameService implements OnDestroy {
     });
 
     this.player.update(0.01);
+    if (this.currentSelection) {
+      this.selectionCircle.position.x = this.currentSelection.model.position.x;
+      this.selectionCircle.position.y = this.currentSelection.model.position.y;
+    }
 
     this.renderer.render(this.scene, this.camera);
   }
 
+  public onClick(evt: MouseEvent): void {
+    const x =
+      (((evt.clientX / window.innerWidth) * 2 - 1) * this.camera.right) /
+      this.camera.zoom;
+    const y =
+      ((-(evt.clientY / window.innerHeight) * 2 + 1) * 7) / this.camera.zoom;
+
+    for (const enemy of this.enemies) {
+      const pos = enemy.model.position;
+      if (
+        pos.x < x + this.clickRadius &&
+        pos.x > x - this.clickRadius &&
+        pos.y < y + this.clickRadius &&
+        pos.y > y - this.clickRadius
+      ) {
+        if (
+          !this.currentSelection ||
+          this.currentSelection.name !== enemy.name
+        ) {
+          this.selection = enemy;
+          this.selectionCircle.position.x = this.player.model.position.x;
+          this.selectionCircle.position.y = this.player.model.position.y;
+          this.selectionCircle.position.z = -1;
+        }
+        return;
+      }
+    }
+
+    this.selectionCircle.position.z = -101;
+    this.selection = null;
+  }
+
+  set selection(value) {
+    this.newSelection.next(value);
+    this.currentSelection = value;
+  }
+
   public resize(): void {
+    console.log('resize');
     const width = window.innerWidth;
     const height = window.innerHeight;
 
@@ -115,7 +190,13 @@ export class GameService implements OnDestroy {
 
   private _loadModel(): void {}
 
-  private zoom() {
-    this.camera
+  public zoom(e: WheelEvent): void {
+    console.log('scroll');
+    this.camera.zoom = Math.min(
+      Math.max(this.zoomFar, this.camera.zoom - e.deltaY * 0.005),
+      this.zoomNear
+    );
+
+    this.camera.updateProjectionMatrix();
   }
 }
