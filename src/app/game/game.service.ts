@@ -2,7 +2,7 @@ import { ElementRef, Injectable, OnDestroy, NgZone } from '@angular/core';
 import * as THREE from 'three';
 import {
   BasicCharacterController,
-  BasicInputController,
+  BasicMovementController,
   InputController,
 } from './character';
 import { BehaviorSubject } from 'rxjs';
@@ -39,12 +39,20 @@ export class GameService implements OnDestroy {
   }
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x193450);
+
     this.player = new BasicCharacterController(
-      new BasicInputController(),
-      'ME'
+      new BasicMovementController(),
+      'ME',
+      this.scene
     );
 
-    const enemy = new BasicCharacterController(new InputController(), 'Enemy');
+    const enemy = new BasicCharacterController(
+      new InputController(),
+      'Enemy',
+      this.scene
+    );
     this.enemies.push(enemy);
 
     // The first step is to get the reference of the canvas element from our HTML document
@@ -55,19 +63,6 @@ export class GameService implements OnDestroy {
       alpha: true, // transparent background
       antialias: true, // smooth edges
     });
-
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x193450);
-
-    this.player.onLoad = () => {
-      this.player.model.name = 'test';
-      this.scene.add(this.player.model);
-    };
-    enemy.onLoad = () => {
-      enemy.model.position.set(1, 1, 0);
-      enemy.model.name = 'test2';
-      this.scene.add(enemy.model);
-    };
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -92,17 +87,7 @@ export class GameService implements OnDestroy {
 
     this.scene.add(new THREE.AxesHelper(5));
 
-    const geometry = new THREE.PlaneGeometry(5, 5, 1);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xffff00,
-      side: THREE.DoubleSide,
-    });
-    const plane = new THREE.Mesh(geometry, material);
-    plane.position.set(0, 0, -1);
-    //this.scene.add(plane);
-
     const geom = new THREE.CircleGeometry(1, 60);
-    //geom.vertices.shift();
     const mat = new THREE.LineBasicMaterial({ color: 0xff0000 });
     this.selectionCircle = new THREE.LineLoop(geom, mat);
     this.selectionCircle.position.z = -101;
@@ -160,9 +145,8 @@ export class GameService implements OnDestroy {
           this.currentSelection.name !== enemy.name
         ) {
           this.selection = enemy;
-          this.selectionCircle.position.x = this.player.model.position.x;
-          this.selectionCircle.position.y = this.player.model.position.y;
           this.selectionCircle.position.z = -1;
+          this.player.fire(enemy, 4);
         }
         return;
       }
