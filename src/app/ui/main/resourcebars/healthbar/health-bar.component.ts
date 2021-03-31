@@ -8,16 +8,14 @@ import { GameService } from '../../../../game/game.service';
 })
 export class HealthBarComponent implements OnInit {
   public health = 40;
-  public target = '';
+  public target: string;
 
   constructor(private gameService: GameService) {
     // TODO subscribe to health
-    gameService.newSelection.subscribe((target) => {
-      if (target) {
-        this.target = target.name;
-      } else {
-        this.target = '';
-      }
+    gameService.loaded.subscribe(() => {
+      this.gameService.player.targetObs.subscribe(
+        (t) => (this.target = t?.name || '')
+      );
     });
   }
 

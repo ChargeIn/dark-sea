@@ -1,11 +1,17 @@
-import { ElementRef, Injectable, OnDestroy, NgZone } from '@angular/core';
+import {
+  ElementRef,
+  Injectable,
+  OnDestroy,
+  NgZone,
+  EventEmitter,
+} from '@angular/core';
 import * as THREE from 'three';
 import {
   BasicCharacterController,
   BasicMovementController,
   InputController,
+  PlayerController,
 } from './character';
-import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -15,17 +21,15 @@ export class GameService implements OnDestroy {
   private renderer: THREE.WebGLRenderer;
   private camera: THREE.PerspectiveCamera;
   private scene: THREE.Scene;
-  private player: BasicCharacterController;
+  public player: PlayerController;
   private enemies: BasicCharacterController[] = [];
   private time: number;
+  public loaded = new EventEmitter<void>();
 
   private readonly zoomFar = 0.5;
   private readonly zoomNear = 2;
   private readonly clickRadius = 1;
   private currentSelection: BasicCharacterController | null = null;
-  public newSelection = new BehaviorSubject<BasicCharacterController | null>(
-    null
-  );
   private selectionCircle: THREE.Mesh;
 
   private frameId: number = null;
@@ -42,15 +46,17 @@ export class GameService implements OnDestroy {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x193450);
 
-    this.player = new BasicCharacterController(
+    this.player = new PlayerController(
       new BasicMovementController(),
       'ME',
+      3,
       this.scene
     );
 
     const enemy = new BasicCharacterController(
       new InputController(),
       'Enemy',
+      1,
       this.scene
     );
     this.enemies.push(enemy);
@@ -93,7 +99,7 @@ export class GameService implements OnDestroy {
     this.selectionCircle.position.z = -101;
     this.scene.add(this.selectionCircle);
 
-    this._loadModel();
+    this.loaded.emit();
   }
 
   public animate(): void {
@@ -146,7 +152,6 @@ export class GameService implements OnDestroy {
         ) {
           this.selection = enemy;
           this.selectionCircle.position.z = -1;
-          this.player.fire(enemy, 4);
         }
         return;
       }
@@ -157,8 +162,8 @@ export class GameService implements OnDestroy {
   }
 
   set selection(value) {
-    this.newSelection.next(value);
     this.currentSelection = value;
+    this.player.target = value;
   }
 
   public resize(): void {
@@ -172,10 +177,7 @@ export class GameService implements OnDestroy {
     this.renderer.setSize(width, height);
   }
 
-  private _loadModel(): void {}
-
   public zoom(e: WheelEvent): void {
-    console.log('scroll');
     this.camera.zoom = Math.min(
       Math.max(this.zoomFar, this.camera.zoom - e.deltaY * 0.005),
       this.zoomNear

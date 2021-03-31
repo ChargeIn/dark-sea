@@ -1,11 +1,13 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
 import { Bullet } from './object';
+import { Subject } from 'rxjs';
 
 export class BasicCharacterController {
   constructor(
     controller: InputController,
     name: string,
+    bulletCount: number,
     private scene: THREE.scene,
     x = 0,
     y = 0
@@ -13,6 +15,7 @@ export class BasicCharacterController {
     this.input = controller;
     this.name = name;
     this.loadModel(x, y);
+    this.bulletCount = bulletCount;
   }
 
   get model(): THREE.scene {
@@ -20,11 +23,11 @@ export class BasicCharacterController {
   }
 
   private static readonly speed = 10;
-  private static readonly rotationSpeed = 10;
   private input: InputController;
   private ship: THREE.Sceen;
   private visualsAddons: THREE.Sceen[] = [];
   private bullets: Bullet[] = [];
+  private readonly bulletCount;
   public name: string;
 
   private loadModel(x, y): void {
@@ -114,11 +117,47 @@ export class BasicCharacterController {
     }
   }
 
-  public fire(target: BasicCharacterController, count: number): void {
-    for (let i = 0; i < count; i++) {
+  public fire(target: BasicCharacterController): void {
+    for (let i = 0; i < this.bulletCount; i++) {
       this.bullets.push(
         new Bullet(target, this.scene, this, this.bullets.length)
       );
+    }
+  }
+}
+
+export class PlayerController extends BasicCharacterController {
+  private _target: BasicCharacterController | null = null;
+  public targetObs = new Subject<BasicCharacterController>();
+  private _fire = false;
+  private readonly fireDuration = 3;
+
+  set target(target: BasicCharacterController | null) {
+    this._target = target;
+    this.targetObs.next(this._target);
+  }
+
+  get target(): BasicCharacterController | null {
+    return this._target;
+  }
+
+  private autoFire(): void {
+    if (this.target) {
+      super.fire(this._target);
+
+      setTimeout(() => {
+        if (this._fire) {
+          this.autoFire();
+        }
+      });
+    }
+  }
+
+  public toggleFire(): void {
+    this._fire = !this._fire;
+
+    if (this._fire) {
+      this.autoFire();
     }
   }
 }
