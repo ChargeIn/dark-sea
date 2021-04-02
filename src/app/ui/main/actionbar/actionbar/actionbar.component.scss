@@ -1,0 +1,24 @@
+.actionbar {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(to bottom, #02283e, #011a29);
+  border: 1px solid white;
+
+
+  .ability-container {
+
+    .ability {
+
+      &.active {
+        border: 1px solid red;
+      }
+
+      & > img {
+        width: 50px;
+        height: 50px;
+      }
+    }
+  }
+}

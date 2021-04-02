@@ -12,6 +12,7 @@ import {
   InputController,
   PlayerController,
 } from './character';
+import { Water } from './lib/water.js';
 
 @Injectable({
   providedIn: 'root',
@@ -33,6 +34,7 @@ export class GameService implements OnDestroy {
   private selectionCircle: THREE.Mesh;
 
   private frameId: number = null;
+  private water: Water;
 
   constructor(private ngZone: NgZone) {}
 
@@ -45,6 +47,25 @@ export class GameService implements OnDestroy {
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x193450);
+
+    const waterGeometry = new THREE.PlaneGeometry(10, 10);
+
+    this.water = new Water(waterGeometry, {
+      textureWidth: 512,
+      textureHeight: 512,
+      waterNormals: new THREE.TextureLoader().load(
+        'assets/textures/waternormals.jpg',
+        (texture) => (texture.wrapS = texture.wrapT = THREE.RepeatWrapping)
+      ),
+      sunDirection: new THREE.Vector3(),
+      sunColor: 0xffffff,
+      waterColor: 0x001e0f,
+      distortionScale: 3.7,
+      fog: this.scene.fog !== undefined,
+    });
+
+    this.water.position.z = -1;
+    this.scene.add(this.water);
 
     this.player = new PlayerController(
       new BasicMovementController(),
@@ -178,6 +199,8 @@ export class GameService implements OnDestroy {
   }
 
   public zoom(e: WheelEvent): void {
+    this.water.rotation.x -= e.deltaY / 1000;
+
     this.camera.zoom = Math.min(
       Math.max(this.zoomFar, this.camera.zoom - e.deltaY * 0.005),
       this.zoomNear

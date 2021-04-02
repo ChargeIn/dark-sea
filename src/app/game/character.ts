@@ -118,11 +118,7 @@ export class BasicCharacterController {
   }
 
   public fire(target: BasicCharacterController): void {
-    for (let i = 0; i < this.bulletCount; i++) {
-      this.bullets.push(
-        new Bullet(target, this.scene, this, this.bullets.length)
-      );
-    }
+    this.bullets.push(new Bullet(target, this.scene, this, this.bulletCount));
   }
 }
 
@@ -130,7 +126,8 @@ export class PlayerController extends BasicCharacterController {
   private _target: BasicCharacterController | null = null;
   public targetObs = new Subject<BasicCharacterController>();
   private _fire = false;
-  private readonly fireDuration = 3;
+  private _onFireCd = false;
+  private readonly _fireCd = 1200;
 
   set target(target: BasicCharacterController | null) {
     this._target = target;
@@ -143,22 +140,31 @@ export class PlayerController extends BasicCharacterController {
 
   private autoFire(): void {
     if (this.target) {
+      this._onFireCd = true;
       super.fire(this._target);
 
       setTimeout(() => {
+        this._onFireCd = false;
         if (this._fire) {
           this.autoFire();
         }
-      });
+      }, this._fireCd);
+      return;
     }
+
+    this._fire = false;
   }
 
-  public toggleFire(): void {
+  public toggleFire(): boolean {
     this._fire = !this._fire;
 
     if (this._fire) {
-      this.autoFire();
+      if (!this._onFireCd) {
+        this.autoFire();
+      }
     }
+
+    return this._fire;
   }
 }
 

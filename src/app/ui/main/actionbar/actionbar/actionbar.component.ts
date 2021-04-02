@@ -7,6 +7,8 @@ import { GameService } from '../../../../game/game.service';
   styleUrls: ['./actionbar.component.scss'],
 })
 export class ActionbarComponent implements OnInit {
+  public active = [false];
+
   constructor(private gameService: GameService) {}
 
   ngOnInit(): void {
@@ -16,8 +18,12 @@ export class ActionbarComponent implements OnInit {
   private keyPress(e: KeyboardEvent): void {
     switch (e.key.toLocaleLowerCase()) {
       case '1':
-        this.gameService.player.toggleFire();
+        this.fire();
         break;
     }
+  }
+
+  fire(): void {
+    this.active[0] = this.gameService.player.toggleFire();
   }
 }
