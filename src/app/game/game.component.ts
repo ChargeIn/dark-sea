@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { GameService } from './game.service';
 import { BehaviorSubject } from 'rxjs';
-import { BasicCharacterController } from './character';
+import { BasicCharacterController } from './lib/character';
+import { first } from 'rxjs/operators';
 
 @Component({
   selector: 'ds-game',
@@ -16,7 +17,9 @@ export class GameComponent implements OnInit {
 
   ngOnInit(): void {
     this.gameService.createScene(this.rendererCanvas);
-    this.gameService.animate();
+    this.gameService.loaded
+      .pipe(first())
+      .subscribe(() => this.gameService.animate());
   }
 
   onClick(evt: MouseEvent): void {

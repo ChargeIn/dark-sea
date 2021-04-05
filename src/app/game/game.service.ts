@@ -11,8 +11,8 @@ import {
   BasicMovementController,
   InputController,
   PlayerController,
-} from './character';
-import { Water } from './lib/water.js';
+} from './lib/character';
+import { Water } from './lib/water';
 
 @Injectable({
   providedIn: 'root',
@@ -46,26 +46,7 @@ export class GameService implements OnDestroy {
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x193450);
-
-    const waterGeometry = new THREE.PlaneGeometry(10, 10);
-
-    this.water = new Water(waterGeometry, {
-      textureWidth: 512,
-      textureHeight: 512,
-      waterNormals: new THREE.TextureLoader().load(
-        'assets/textures/waternormals.jpg',
-        (texture) => (texture.wrapS = texture.wrapT = THREE.RepeatWrapping)
-      ),
-      sunDirection: new THREE.Vector3(),
-      sunColor: 0xffffff,
-      waterColor: 0x001e0f,
-      distortionScale: 3.7,
-      fog: this.scene.fog !== undefined,
-    });
-
-    this.water.position.z = -1;
-    this.scene.add(this.water);
+    //this.scene.background = new THREE.Color(0x193450);
 
     this.player = new PlayerController(
       new BasicMovementController(),
@@ -80,7 +61,8 @@ export class GameService implements OnDestroy {
       1,
       this.scene
     );
-    this.enemies.push(enemy);
+
+    enemy.loaded.then(() => this.enemies.push(enemy));
 
     // The first step is to get the reference of the canvas element from our HTML document
     this.canvas = canvas.nativeElement;
@@ -106,6 +88,8 @@ export class GameService implements OnDestroy {
       100 // far
     );
 
+    this.camera.position.set(30, 30, 100);
+
     this.camera.position.set(0, -5, 5);
     this.camera.lookAt(0, 0, 0);
 
@@ -120,12 +104,15 @@ export class GameService implements OnDestroy {
     this.selectionCircle.position.z = -101;
     this.scene.add(this.selectionCircle);
 
-    this.loaded.emit();
+    this.player.loaded.then(() => this.loaded.emit());
+
+    this.water = new Water(200, 200, this.scene);
   }
 
   public animate(): void {
     // We have to run this outside angular zones,
     // because it could trigger heavy changeDetection cycles.
+
     this.time = 0;
     this.ngZone.runOutsideAngular(() => {
       if (document.readyState !== 'loading') {
@@ -142,6 +129,8 @@ export class GameService implements OnDestroy {
     this.frameId = requestAnimationFrame(() => {
       this.render();
     });
+
+    const time = performance.now() * 0.001;
 
     this.player.update(0.01);
     if (this.currentSelection) {
@@ -199,8 +188,6 @@ export class GameService implements OnDestroy {
   }
 
   public zoom(e: WheelEvent): void {
-    this.water.rotation.x -= e.deltaY / 1000;
-
     this.camera.zoom = Math.min(
       Math.max(this.zoomFar, this.camera.zoom - e.deltaY * 0.005),
       this.zoomNear

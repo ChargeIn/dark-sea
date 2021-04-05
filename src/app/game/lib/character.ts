@@ -29,22 +29,26 @@ export class BasicCharacterController {
   private bullets: Bullet[] = [];
   private readonly bulletCount;
   public name: string;
+  public loaded: Promise<void>;
 
   private loadModel(x, y): void {
     const loader = new GLTFLoader();
 
-    loader.load(
-      'assets/ships/destroyer/destroyer.gltf',
-      (gltf) => {
-        gltf.scene.traverse((c) => (c.castShadow = true));
-        this.ship = gltf.scene;
-        this.ship.name = this.name;
-        this.ship.rotation.x = Math.PI / 2;
-        this.ship.position.set(x, y, -0.4);
-        this.scene.add(this.ship);
-      },
-      undefined,
-      (error) => console.log(error)
+    this.loaded = new Promise<void>((resolve) =>
+      loader.load(
+        'assets/ships/destroyer/destroyer.gltf',
+        (gltf) => {
+          gltf.scene.traverse((c) => (c.castShadow = true));
+          this.ship = gltf.scene;
+          this.ship.name = this.name;
+          this.ship.rotation.x = Math.PI / 2;
+          this.ship.position.set(x, y, -0.4);
+          this.scene.add(this.ship);
+          resolve();
+        },
+        undefined,
+        (error) => console.log(error)
+      )
     );
   }
 
