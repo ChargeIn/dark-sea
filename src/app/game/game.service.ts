@@ -105,8 +105,6 @@ export class GameService implements OnDestroy {
     this.scene.add(this.selectionCircle);
 
     this.player.loaded.then(() => this.loaded.emit());
-
-    this.water = new Water(200, 200, this.scene);
   }
 
   public animate(): void {
