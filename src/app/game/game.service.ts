@@ -46,7 +46,7 @@ export class GameService implements OnDestroy {
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
     this.scene = new THREE.Scene();
-    //this.scene.background = new THREE.Color(0x193450);
+    this.scene.background = new THREE.Color(0x193450);
 
     this.player = new PlayerController(
       new BasicMovementController(),

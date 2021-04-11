@@ -141,6 +141,7 @@
       true,
       "attribute",
       "app",
+      "game",
       "camelCase"
     ],
     "component-selector": [
