@@ -71,47 +71,34 @@ export class BasicCharacterController {
   }
 
   public update(timeElapsed: number): void {
+    const xd: number = +this.input.right - +this.input.left;
+    const yd: number = +this.input.up - +this.input.down;
+
     const x =
-      this.ship.position.x +
-      (+this.input.right - +this.input.left) *
-        BasicCharacterController.speed *
-        timeElapsed;
+      this.ship.position.x + xd * BasicCharacterController.speed * timeElapsed;
 
     const y =
-      this.ship.position.y +
-      (+this.input.up - +this.input.down) *
-        BasicCharacterController.speed *
-        timeElapsed;
+      this.ship.position.y + yd * BasicCharacterController.speed * timeElapsed;
 
     this.setPosition(x, y);
 
     // update rotation
+
     let r = null;
-    if (this.input.up) {
-      if (this.input.left) {
-        r = (-Math.PI * 3) / 4;
-      } else if (this.input.right) {
-        r = (Math.PI * 3) / 4;
-      } else {
-        r = Math.PI;
-      }
-    } else if (this.input.down) {
-      if (this.input.left) {
-        r = -Math.PI / 4;
-      } else if (this.input.right) {
-        r = Math.PI / 4;
-      } else {
-        this.ship.rotation.y = 0;
-      }
-    } else {
-      if (this.input.left) {
-        r = -Math.PI / 2;
-      } else if (this.input.right) {
-        r = Math.PI / 2;
-      }
+    if (Math.abs(yd) > 0) {
+      r = (+this.input.up - (yd * xd) / 4) * Math.PI;
+    } else if (Math.abs(xd) > 0) {
+      r = (xd / 2) * Math.PI;
     }
 
-    if (r) {
+    // // visually more appealing but slower (rotation calculations)
+    // r = Math.acos(yd / Math.sqrt(xd * xd + yd * yd)) - Math.PI;
+    //
+    // if (!isNaN(r)) {
+    //   r = xd > 0 ? -r : r;
+    // }
+
+    if (r !== null) {
       this.setRotation(r);
     }
 

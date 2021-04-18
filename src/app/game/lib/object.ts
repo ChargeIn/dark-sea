@@ -1,7 +1,9 @@
-import {BasicCharacterController} from './character';
+import { BasicCharacterController } from './character';
 import * as THREE from 'three';
-import {FBXLoader} from './fbxloader';
-import {explosionFragmentShader, explosionVertexShader} from "./explosion.shader";
+import {
+  explosionVertexShader,
+  explosionFragmentShader,
+} from './explosion.shader';
 
 export class Bullet {
   private upVelocity;
@@ -11,8 +13,9 @@ export class Bullet {
   private readonly shipOffset = 0.4;
   private visuals: THREE.Mesh[] = [];
   public done = false;
-  private mixer;
   private stop = true;
+  private uniforms: { [key: string]: any };
+  private hitEffect: THREE.Mesh;
 
   constructor(
     private target: BasicCharacterController,
@@ -22,7 +25,7 @@ export class Bullet {
   ) {
     this.model = new THREE.Mesh(
       new THREE.SphereGeometry(0.03, 8, 8),
-      new THREE.MeshBasicMaterial({color: 0xffffff})
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
     );
     const diff = start.model.position.x - target.model.position.x;
     const absDiff = Math.abs(diff);
@@ -45,7 +48,7 @@ export class Bullet {
     for (let i = 1; i < amount; i++) {
       const bullet = new THREE.Mesh(
         new THREE.SphereGeometry(0.03, 8, 8),
-        new THREE.MeshBasicMaterial({color: 0xffffff})
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
       );
 
       bullet.position.set(
@@ -60,10 +63,16 @@ export class Bullet {
   }
 
   update(time: number): boolean {
-    //if ( this.mixer ) { this.mixer.update( time ); }
-
     if (this.done) {
       return;
+    }
+
+    if (this.uniforms) {
+      this.uniforms.iTime.value += time * 3;
+      if (this.uniforms.iTime.value > 1) {
+        this.done = true;
+        this.scene.remove(this.hitEffect);
+      }
     }
 
     let diffX = this.target.model.position.x - this.model.position.x;
@@ -74,38 +83,24 @@ export class Bullet {
 
     if (abs < 0.5 && this.stop) {
       this.stop = false;
-      //this.done = true;
       this.visuals.forEach((bullet) => this.scene.remove(bullet));
 
       // model
+      this.uniforms = {
+        iTime: { value: 0 },
+      };
+
       const material = new THREE.ShaderMaterial({
-
-        uniforms: {
-          iResolution: {value: new THREE.Vector3()},
-          iTime: {value: 1.0},
-          iTimeDelta: 0.1,
-          iFrame: 60,
-          iChannelTime: {value: [1, 1, 1, 1]},
-          iChannelResolution: {value: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]},
-          iMouse: {value: new THREE.Vector4()},
-          iChannel0: {value: new THREE.CubeTexture()},
-          iChannel1: {value: new THREE.CubeTexture()},
-          iChannel2: {value: new THREE.CubeTexture()},
-          iChannel3: {value: new THREE.CubeTexture()},
-          iDate: {value: new THREE.Vector4()},
-          iSimpleRate: {value: 1}
-        },
-
         vertexShader: explosionVertexShader,
-
         fragmentShader: explosionFragmentShader,
-
+        uniforms: this.uniforms,
+        transparent: true,
       });
 
-      const geometry = new THREE.PlaneGeometry(5, 20, 32);
-      const plane = new THREE.Mesh(geometry, material);
-      this.scene.add(plane);
+      const geometry = new THREE.PlaneGeometry(100, 100, 1);
 
+      this.hitEffect = new THREE.Mesh(geometry, material);
+      this.scene.add(this.hitEffect);
     }
 
     this.visuals.forEach((bullet) => {
