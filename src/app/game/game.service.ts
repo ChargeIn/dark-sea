@@ -8,7 +8,7 @@ import {
 import * as THREE from 'three';
 import {
   BasicCharacterController,
-  BasicMovementController,
+  CharacterMovementController,
   InputController,
   PlayerController,
 } from './lib/character';
@@ -49,7 +49,7 @@ export class GameService implements OnDestroy {
     this.scene.background = new THREE.Color(0x193450);
 
     this.player = new PlayerController(
-      new BasicMovementController(),
+      new CharacterMovementController(),
       'ME',
       3,
       this.scene
@@ -144,7 +144,7 @@ export class GameService implements OnDestroy {
       (((evt.clientX / window.innerWidth) * 2 - 1) * this.camera.right) /
       this.camera.zoom;
     const y =
-      ((-(evt.clientY / window.innerHeight) * 2 + 1) * 7) / this.camera.zoom;
+      ((-(evt.clientY / window.innerHeight) * 2 + 1.1) * 7) / this.camera.zoom;
 
     for (const enemy of this.enemies) {
       const pos = enemy.model.position;
@@ -164,7 +164,10 @@ export class GameService implements OnDestroy {
         return;
       }
     }
+    this.player.moveTo({ x, y });
+  }
 
+  cancel(): void {
     this.selectionCircle.position.z = -101;
     this.selection = null;
   }

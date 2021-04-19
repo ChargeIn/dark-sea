@@ -22,8 +22,7 @@ export class BasicCharacterController {
     return this.ship;
   }
 
-  private static readonly speed = 10;
-  private input: InputController;
+  protected input: InputController;
   private ship: THREE.Sceen;
   private visualsAddons: THREE.Sceen[] = [];
   private bullets: Bullet[] = [];
@@ -70,26 +69,29 @@ export class BasicCharacterController {
     }
   }
 
-  public update(timeElapsed: number): void {
-    const xd: number = +this.input.right - +this.input.left;
-    const yd: number = +this.input.up - +this.input.down;
+  update(timeElapsed: number): void {
+    this.updateVisuals(timeElapsed);
+  }
 
-    const x =
-      this.ship.position.x + xd * BasicCharacterController.speed * timeElapsed;
+  fire(target: BasicCharacterController): void {
+    this.bullets.push(new Bullet(target, this.scene, this, this.bulletCount));
+  }
 
-    const y =
-      this.ship.position.y + yd * BasicCharacterController.speed * timeElapsed;
+  updateVisuals(timeElapsed: number): void {
+    this.bullets.forEach((bullet) => bullet.update(timeElapsed));
+    while (this.bullets.length > 0 && this.bullets[0].done) {
+      this.bullets.shift();
+    }
+  }
+
+  updatePosition(moveDirX: number, moveDirY: number): void {
+    const x = this.ship.position.x + moveDirX;
+
+    const y = this.ship.position.y + moveDirY;
 
     this.setPosition(x, y);
 
     // update rotation
-
-    let r = null;
-    if (Math.abs(yd) > 0) {
-      r = (+this.input.up - (yd * xd) / 4) * Math.PI;
-    } else if (Math.abs(xd) > 0) {
-      r = (xd / 2) * Math.PI;
-    }
 
     // // visually more appealing but slower (rotation calculations)
     // r = Math.acos(yd / Math.sqrt(xd * xd + yd * yd)) - Math.PI;
@@ -98,26 +100,28 @@ export class BasicCharacterController {
     //   r = xd > 0 ? -r : r;
     // }
 
+    let r = null;
+    if (Math.abs(moveDirY) > 0) {
+      r =
+        ((moveDirY > 0 ? 1 : 0) - Math.sign(moveDirY * moveDirX) / 4) * Math.PI;
+    } else if (Math.abs(moveDirX) > 0) {
+      r = (Math.sign(moveDirX) / 2) * Math.PI;
+    }
+
     if (r !== null) {
       this.setRotation(r);
     }
-
-    this.bullets.forEach((bullet) => bullet.update(timeElapsed));
-    while (this.bullets.length > 0 && this.bullets[0].done) {
-      this.bullets.shift();
-    }
-  }
-
-  public fire(target: BasicCharacterController): void {
-    this.bullets.push(new Bullet(target, this.scene, this, this.bulletCount));
   }
 }
 
 export class PlayerController extends BasicCharacterController {
+  private static readonly speed = 10;
+
   private _target: BasicCharacterController | null = null;
   public targetObs = new Subject<BasicCharacterController>();
   private _fire = false;
   private _onFireCd = false;
+  private move: { x: number; y: number } | null = null;
   private readonly _fireCd = 1200;
 
   set target(target: BasicCharacterController | null) {
@@ -146,7 +150,7 @@ export class PlayerController extends BasicCharacterController {
     this._fire = false;
   }
 
-  public toggleFire(): boolean {
+  toggleFire(): boolean {
     this._fire = !this._fire;
 
     if (this._fire) {
@@ -157,23 +161,60 @@ export class PlayerController extends BasicCharacterController {
 
     return this._fire;
   }
+
+  moveTo(moveVec: { x: number; y: number }): void {
+    this.move = moveVec;
+  }
+
+  update(timeElapsed: number): void {
+    const mult = PlayerController.speed * timeElapsed;
+    let x = this.input.x * mult;
+    let y = this.input.y * mult;
+
+    if (this.move) {
+      if (Math.abs(x) + Math.abs(y) > 0) {
+        this.move = null;
+      } else {
+        const diffX = this.move.x - this.model.position.x;
+        const diffY = this.move.y - this.model.position.y;
+        x =
+          Math.sign(diffX) *
+          Math.min(Math.abs(diffX), PlayerController.speed * timeElapsed);
+        y =
+          Math.sign(diffY) *
+          Math.min(Math.abs(diffY), PlayerController.speed * timeElapsed);
+      }
+    }
+
+    this.updatePosition(x, y);
+    this.updateVisuals(timeElapsed);
+  }
 }
 
 export class InputController {
-  public up = false;
-  public down = false;
   public left = false;
   public right = false;
+  public up = false;
+  public down = false;
+
+  get x(): number {
+    return +this.right - +this.left;
+  }
+
+  get y(): number {
+    return +this.up - +this.down;
+  }
 }
 
-export class BasicMovementController extends InputController {
+export class CharacterMovementController extends InputController {
   constructor() {
     super();
     document.addEventListener('keydown', (e) => this.keyPress(e, true), false);
     document.addEventListener('keyup', (e) => this.keyPress(e, false), false);
   }
 
-  private keyPress(e: KeyboardEvent, pressed): void {
+  private keyPress(e: KeyboardEvent, pressed: boolean): void {
+    console.log(e);
     switch (e.key.toLocaleLowerCase()) {
       case 'w':
         this.up = pressed;
