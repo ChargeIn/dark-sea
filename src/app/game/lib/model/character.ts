@@ -214,7 +214,6 @@ export class CharacterMovementController extends InputController {
   }
 
   private keyPress(e: KeyboardEvent, pressed: boolean): void {
-    console.log(e);
     switch (e.key.toLocaleLowerCase()) {
       case 'w':
         this.up = pressed;

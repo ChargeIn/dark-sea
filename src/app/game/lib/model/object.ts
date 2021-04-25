@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {
   explosionVertexShader,
   explosionFragmentShader,
-} from './explosion.shader';
+} from '../sharders/explosion.shader';
 
 export class Bullet {
   private upVelocity;

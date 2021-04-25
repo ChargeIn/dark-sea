@@ -1,7 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { GameService } from './game.service';
-import { BehaviorSubject } from 'rxjs';
-import { BasicCharacterController } from './lib/character';
 import { first } from 'rxjs/operators';
 
 @Component({

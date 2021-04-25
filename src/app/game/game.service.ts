@@ -11,8 +11,11 @@ import {
   CharacterMovementController,
   InputController,
   PlayerController,
-} from './lib/character';
-import { Water } from './lib/water';
+} from './lib/model/character';
+import {
+  gliziFragmentShader,
+  gliziVertexShader,
+} from './lib/sharders/glizi.shader';
 
 @Injectable({
   providedIn: 'root',
@@ -34,7 +37,8 @@ export class GameService implements OnDestroy {
   private selectionCircle: THREE.Mesh;
 
   private frameId: number = null;
-  private water: Water;
+  private glizi: THREE.Mesh;
+  private uniforms: { iTime: { value: number } };
 
   constructor(private ngZone: NgZone) {}
 
@@ -104,6 +108,39 @@ export class GameService implements OnDestroy {
     this.selectionCircle.position.z = -101;
     this.scene.add(this.selectionCircle);
 
+    // model
+    this.uniforms = {
+      iTime: { value: 0 },
+    };
+
+    // glizi test
+    const material = new THREE.ShaderMaterial({
+      vertexShader: gliziVertexShader,
+      fragmentShader: gliziFragmentShader,
+      uniforms: this.uniforms,
+      transparent: true,
+    });
+
+    const geometry = new THREE.PlaneGeometry(0.75, 0.75, 1);
+    this.glizi = new THREE.Mesh(geometry, material);
+    this.scene.add(this.glizi);
+    this.glizi.position.x = 1;
+    this.glizi.position.z = -0.99;
+
+    const level = new THREE.PlaneGeometry(width, height, 1);
+    const texture = new THREE.TextureLoader().load(
+      'assets/textures/WaterAnimations/ocean01.png'
+    );
+    const levelMaterial = new THREE.MeshBasicMaterial({ map: texture });
+
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(width / 342, height / 180);
+
+    const levelMesh = new THREE.Mesh(level, levelMaterial);
+    levelMesh.position.z = -1;
+    this.scene.add(levelMesh);
+
     this.player.loaded.then(() => this.loaded.emit());
   }
 
@@ -128,7 +165,7 @@ export class GameService implements OnDestroy {
       this.render();
     });
 
-    const time = performance.now() * 0.001;
+    this.uniforms.iTime.value += 0.01;
 
     this.player.update(0.01);
     if (this.currentSelection) {
@@ -178,7 +215,6 @@ export class GameService implements OnDestroy {
   }
 
   public resize(): void {
-    console.log('resize');
     const width = window.innerWidth;
     const height = window.innerHeight;
 
