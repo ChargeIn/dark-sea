@@ -8,7 +8,7 @@ export class BasicCharacterController {
     controller: InputController,
     name: string,
     bulletCount: number,
-    private scene: THREE.scene,
+    protected scene: THREE.scene,
     x = 0,
     y = 0
   ) {
@@ -123,6 +123,7 @@ export class PlayerController extends BasicCharacterController {
   private _onFireCd = false;
   private move: { x: number; y: number } | null = null;
   private readonly _fireCd = 1200;
+  private readonly movePointer = THREE.Mesh;
 
   set target(target: BasicCharacterController | null) {
     this._target = target;
@@ -131,6 +132,25 @@ export class PlayerController extends BasicCharacterController {
 
   get target(): BasicCharacterController | null {
     return this._target;
+  }
+
+  constructor(
+    controller: InputController,
+    name: string,
+    bulletCount: number,
+    scene: THREE.scene,
+    x = 0,
+    y = 0
+  ) {
+    super(controller, name, bulletCount, scene, x, y);
+    const geometry = new THREE.PlaneGeometry(0.2, 0.2, 1);
+    const mat = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.8,
+    });
+    this.movePointer = new THREE.Mesh(geometry, mat);
+    this.scene.add(this.movePointer);
   }
 
   private autoFire(): void {
@@ -164,9 +184,15 @@ export class PlayerController extends BasicCharacterController {
 
   moveTo(moveVec: { x: number; y: number }): void {
     this.move = moveVec;
+    this.movePointer.position.set(moveVec.x, moveVec.y, -0.9);
+    this.movePointer.material.opacity = 1;
   }
 
   update(timeElapsed: number): void {
+    if (this.movePointer.material.opacity > 0) {
+      this.movePointer.material.opacity -= timeElapsed;
+    }
+
     const mult = PlayerController.speed * timeElapsed;
     let x = this.input.x * mult;
     let y = this.input.y * mult;

@@ -16,6 +16,14 @@ import {
   gliziFragmentShader,
   gliziVertexShader,
 } from './lib/sharders/glizi.shader';
+import {
+  explosionFragmentShader,
+  explosionVertexShader,
+} from './lib/sharders/explosion.shader';
+import {
+  selectionFragmentShader,
+  selectionVertexShader,
+} from './lib/sharders/selection.shader';
 
 @Injectable({
   providedIn: 'root',
@@ -97,14 +105,18 @@ export class GameService implements OnDestroy {
     this.camera.position.set(0, -5, 5);
     this.camera.lookAt(0, 0, 0);
 
-    const bglight = new THREE.AmbientLight(0xffffff, 1.3);
+    const bglight = new THREE.AmbientLight(0xffffff, 1.7);
     this.scene.add(bglight);
 
-    this.scene.add(new THREE.AxesHelper(5));
+    const mat = new THREE.ShaderMaterial({
+      vertexShader: selectionVertexShader,
+      fragmentShader: selectionFragmentShader,
+      transparent: true,
+    });
 
-    const geom = new THREE.CircleGeometry(1, 60);
-    const mat = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    this.selectionCircle = new THREE.LineLoop(geom, mat);
+    const geom = new THREE.PlaneGeometry(1.5, 1.5, 1);
+
+    this.selectionCircle = new THREE.Mesh(geom, mat);
     this.selectionCircle.position.z = -101;
     this.scene.add(this.selectionCircle);
 
@@ -128,14 +140,12 @@ export class GameService implements OnDestroy {
     this.glizi.position.z = -0.99;
 
     const level = new THREE.PlaneGeometry(width, height, 1);
-    const texture = new THREE.TextureLoader().load(
-      'assets/textures/WaterAnimations/ocean01.png'
-    );
+    const texture = new THREE.TextureLoader().load('assets/textures/blur.jpeg');
     const levelMaterial = new THREE.MeshBasicMaterial({ map: texture });
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(width / 342, height / 180);
+    texture.repeat.set(360, 180);
 
     const levelMesh = new THREE.Mesh(level, levelMaterial);
     levelMesh.position.z = -1;
@@ -181,7 +191,8 @@ export class GameService implements OnDestroy {
       (((evt.clientX / window.innerWidth) * 2 - 1) * this.camera.right) /
       this.camera.zoom;
     const y =
-      ((-(evt.clientY / window.innerHeight) * 2 + 1.1) * 7) / this.camera.zoom;
+      ((-(evt.clientY / window.innerHeight) * 2 + 1) * 7) / this.camera.zoom +
+      1;
 
     for (const enemy of this.enemies) {
       const pos = enemy.model.position;
@@ -196,7 +207,7 @@ export class GameService implements OnDestroy {
           this.currentSelection.name !== enemy.name
         ) {
           this.selection = enemy;
-          this.selectionCircle.position.z = -1;
+          this.selectionCircle.position.z = -0.9;
         }
         return;
       }
