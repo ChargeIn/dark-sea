@@ -147,7 +147,7 @@ export class PlayerController extends BasicCharacterController {
     const mat = new THREE.LineBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0,
     });
     this.movePointer = new THREE.Mesh(geometry, mat);
     this.scene.add(this.movePointer);
@@ -185,7 +185,7 @@ export class PlayerController extends BasicCharacterController {
   moveTo(moveVec: { x: number; y: number }): void {
     this.move = moveVec;
     this.movePointer.position.set(moveVec.x, moveVec.y, -0.9);
-    this.movePointer.material.opacity = 1;
+    this.movePointer.material.opacity = 0.7;
   }
 
   update(timeElapsed: number): void {
