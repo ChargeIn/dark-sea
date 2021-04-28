@@ -69,7 +69,7 @@ export class Bullet {
 
     if (this.uniforms) {
       this.uniforms.iTime.value += time * 3;
-      if (this.uniforms.iTime.value > 1) {
+      if (this.uniforms.iTime.value > 1000000) {
         this.done = true;
         this.scene.remove(this.hitEffect);
       }
@@ -97,9 +97,15 @@ export class Bullet {
         transparent: true,
       });
 
-      const geometry = new THREE.PlaneGeometry(100, 100, 1);
+      const geometry = new THREE.PlaneGeometry(1, 2, 1);
 
       this.hitEffect = new THREE.Mesh(geometry, material);
+      this.hitEffect.position.set(
+        this.target.model.position.x - 1.5,
+        this.target.model.position.y,
+        -0.7
+      );
+      this.hitEffect.rotation.x = 1.5;
       this.scene.add(this.hitEffect);
     }
 
