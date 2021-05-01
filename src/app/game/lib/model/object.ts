@@ -69,7 +69,7 @@ export class Bullet {
 
     if (this.uniforms) {
       this.uniforms.iTime.value += time * 3;
-      if (this.uniforms.iTime.value > 1000000) {
+      if (this.uniforms.iTime.value > 0.45) {
         this.done = true;
         this.scene.remove(this.hitEffect);
       }
