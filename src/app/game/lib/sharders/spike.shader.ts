@@ -1,6 +1,6 @@
 // cool expl:  https://www.shadertoy.com/view/MdfGRX
 
-export const explosionVertexShader = `
+export const spikeVertexShader = `
 //
 // GLSL textureless classic 3D noise "cnoise",
 // with an RSL-style periodic variant "pnoise".
@@ -185,7 +185,7 @@ varying float noise;
 float turbulence( vec3 p ) {
     float w = 100.0;
     float t = -.5;
-    for (float f = 1.0 ; f <= 5.0 ; f++ ){
+    for (float f = 1.0 ; f <= 10.0 ; f++ ){
         float power = pow( 2.0, f );
         t += abs( pnoise( vec3( power * p ), vec3( 10.0, 10.0, 10.0 ) ) / power );
     }
@@ -199,9 +199,9 @@ void main() {
     vUv = uv;
 
     // get a turbulent 3d noise using the normal, normal to high freq
-    noise = -0.5 * turbulence( normal*iTime);
+    noise = -1. * turbulence( .5 * normal*iTime );
     // get a 3d noise using the position, low frequency
-    float b = 0.5* pnoise( 0.05 * position + vec3( iTime), vec3( 0.0 ) );
+    float b = pnoise( 0.05 * position + vec3( 2.0 * iTime ), vec3( 0.0 ) );
     // compose both noises
     float displacement = - 1. * noise + b;
 
@@ -222,6 +222,7 @@ void main() {
 
     // compose the colour using the UV coordinate
     // and modulate it with the noise like ambient occlusion
-    gl_FragColor = vec4( noise*4., noise*noise*8., 0, 1.0);
+    vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );
+    gl_FragColor = vec4( color.rgb, 1.0 );
 }
 `;
