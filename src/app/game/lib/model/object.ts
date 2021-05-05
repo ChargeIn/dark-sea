@@ -16,6 +16,8 @@ export class Bullet {
   private stop = true;
   private uniforms: { [key: string]: any };
   private hitEffect: THREE.Mesh;
+  private hitEffect2: THREE.Mesh;
+  private hitEffect3: THREE.Mesh;
 
   constructor(
     private target: BasicCharacterController,
@@ -69,9 +71,11 @@ export class Bullet {
 
     if (this.uniforms) {
       this.uniforms.iTime.value += time;
-      if (this.uniforms.iTime.value > 100) {
+      if (this.uniforms.iTime.value > 0.2) {
         this.done = true;
         this.scene.remove(this.hitEffect);
+        this.scene.remove(this.hitEffect2);
+        this.scene.remove(this.hitEffect3);
       }
     }
 
@@ -97,16 +101,31 @@ export class Bullet {
         transparent: true,
       });
 
-      const geometry = new THREE.IcosahedronGeometry(0.25, 16);
+      const geometry = new THREE.IcosahedronGeometry(0.2, 8);
 
       this.hitEffect = new THREE.Mesh(geometry, material);
       this.hitEffect.position.set(
-        this.target.model.position.x - 1.5,
-        this.target.model.position.y,
-        -0.7
+        this.target.model.position.x,
+        this.target.model.position.y - 1,
+        0
       );
-      this.hitEffect.rotation.x = 1.5;
       this.scene.add(this.hitEffect);
+
+      this.hitEffect2 = new THREE.Mesh(geometry, material);
+      this.hitEffect2.position.set(
+        this.target.model.position.x,
+        this.target.model.position.y - 0.4,
+        0
+      );
+      this.scene.add(this.hitEffect2);
+
+      this.hitEffect3 = new THREE.Mesh(geometry, material);
+      this.hitEffect3.position.set(
+        this.target.model.position.x,
+        this.target.model.position.y + 0.2,
+        0
+      );
+      this.scene.add(this.hitEffect3);
     }
 
     this.visuals.forEach((bullet) => {

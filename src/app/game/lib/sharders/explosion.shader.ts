@@ -198,12 +198,14 @@ void main() {
 
     vUv = uv;
 
+    float t = iTime+0.6;
+
     // get a turbulent 3d noise using the normal, normal to high freq
-    noise = -0.5 * turbulence( normal*iTime);
+    noise = - 0.25* turbulence( normal*t);
     // get a 3d noise using the position, low frequency
-    float b = 0.5* pnoise( 0.05 * position + vec3( iTime), vec3( 0.0 ) );
+    float b =  0.25* pnoise( 0.05 * position + t, vec3( 0.0 ) );
     // compose both noises
-    float displacement = - 1. * noise + b;
+    float displacement = (b - noise)*2.;
 
     // move the position along the normal and transform it
     vec3 newPosition = position + normal * displacement;
@@ -222,6 +224,6 @@ void main() {
 
     // compose the colour using the UV coordinate
     // and modulate it with the noise like ambient occlusion
-    gl_FragColor = vec4( noise*4., noise*noise*8., 0, 1.0);
+    gl_FragColor = vec4( noise*8., noise*noise*32., 0, 1. - (iTime-0.2)*4.);
 }
 `;

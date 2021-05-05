@@ -24,6 +24,7 @@
     "@angular/platform-browser": "~11.2.5",
     "@angular/platform-browser-dynamic": "~11.2.5",
     "@angular/router": "~11.2.5",
+    "playfab-web-sdk": "^1.85.210427",
     "prettier": "^2.2.1",
     "rxjs": "~6.6.0",
     "three": "^0.126.1",
